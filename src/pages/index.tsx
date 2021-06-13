@@ -1,3 +1,5 @@
+import React, { useState } from 'react';
+import Head from 'next/head';
 import { GetStaticProps } from 'next';
 import Link from 'next/link';
 import { getPrismicClient } from '../services/prismic';
@@ -27,15 +29,56 @@ interface HomeProps {
   postsPagination: PostPagination;
 }
 
-export default function Home( props: HomeProps ) {
-  
+export default function Home( {postsPagination}: HomeProps ) {
+
+  const [ posts, setPosts ] = useState(postsPagination.results);
+  const [ nextPage, setNextPage ] = useState(postsPagination.next_page);
+
+  async function handleLoadMorePosts () {
+
+    try{
+
+      const postResponse = await fetch(nextPage)
+        .then( response => response.json() )
+        .then( data => {
+          setNextPage(data.next_page);
+          return data.results;
+        })
+
+      const results  = postResponse.map( (post: Post) => ({
+        uid: post.uid,
+        first_publication_date: new Date(post.first_publication_date).toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        }),
+        data: {
+          title: post.data.title,
+          subtitle: post.data.subtitle,
+          author: post.data.author,
+        }
+      }))  
+
+      setPosts([...posts, ...results])
+      
+
+
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
   return(
+    <>
+    <Head>
+      <title>Home | spacenews</title>
+    </Head>
       <div className={styles.posts}>
         <img src="/Logo.svg" alt="logo " />
-      { props.postsPagination.results.map( post => (
+      { posts.map( post => (
         <Link href="#" key={post.uid}>
           <a>
-            <strong>{ post.data.title }</strong>
+            <strong>{ post.data.title}</strong>
             <p>{post.data.subtitle}</p>
             <div>
               <FiCalendar className={styles.infoIcon}/>
@@ -46,7 +89,13 @@ export default function Home( props: HomeProps ) {
           </a>
         </Link>
       ))}
+      { nextPage
+        && <button 
+              type="button"
+              onClick={handleLoadMorePosts} > Carregar mais Posts</button>
+      }
     </div>
+    </>
   );
 }
 
