@@ -61,6 +61,8 @@ export default function Post( { post }: PostProps ) {
   }
 
   return(
+    <>
+    <Header />
     <article className={styles.container}>
       <img src={post.data.banner.url} alt={post.data.title} />
       <h1>{post.data.title}</h1>
@@ -69,9 +71,7 @@ export default function Post( { post }: PostProps ) {
           <span>
             <AiOutlineCalendar />
             <span>
-              { format(new Date(post.first_publication_date), 'dd MM yyyy', {
-                locale: ptBR,
-              }) }
+              { format(new Date(post.first_publication_date), 'dd MMM yyyy',).toLowerCase()}
             </span>
           </span>
           <span>
@@ -87,16 +87,17 @@ export default function Post( { post }: PostProps ) {
         </div>
       </div>
       <div className={styles.content} >
-          { post.data.content.map( content => {
+          { post.data.content.map( content => (
             <div key={ (Math.random() * 999999).toString()}>
               <h2>{content.heading}</h2>
               <div
                 dangerouslySetInnerHTML={ {__html: RichText.asHtml(content.body)}}
               ></div>
             </div>
-          })}
+          ))}
       </div>
     </article>
+    </>
   );
 }
 

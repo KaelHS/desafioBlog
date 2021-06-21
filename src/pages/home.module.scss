@@ -55,4 +55,20 @@
             }
         }
     }
+
+    button {
+        margin: 4rem 0 2rem;
+        font-size: 1.125rem;
+        border: 0;
+        background: none;
+        color: var(--highlight);
+        font-weight: 600;
+        line-height: 22px;
+        padding-bottom: 0.25rem;
+    
+        &:hover {
+          text-decoration: underline;
+          cursor: pointer;
+        }
+      }
 }

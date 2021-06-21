@@ -8,6 +8,8 @@ import Prismic from '@prismicio/client';
 import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
 import { FiUser, FiCalendar } from "react-icons/fi";
+import { format } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
 
 
 interface Post {
@@ -31,10 +33,10 @@ interface HomeProps {
 
 export default function Home( {postsPagination}: HomeProps ) {
 
-  const [ posts, setPosts ] = useState(postsPagination.results);
+  const [loadedPosts, setLoadedPosts] = useState(postsPagination.results);
   const [ nextPage, setNextPage ] = useState(postsPagination.next_page);
 
-  async function handleLoadMorePosts () {
+  async function handleLoadMorePosts ():Promise<void> {
 
     try{
 
@@ -47,19 +49,15 @@ export default function Home( {postsPagination}: HomeProps ) {
 
       const results  = postResponse.map( (post: Post) => ({
         uid: post.uid,
-        first_publication_date: new Date(post.first_publication_date).toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric'
-        }),
+        first_publication_date: post.first_publication_date,
         data: {
           title: post.data.title,
           subtitle: post.data.subtitle,
           author: post.data.author,
-        }
+        },
       }))  
-
-      setPosts([...posts, ...results])
+      
+      setLoadedPosts([...loadedPosts, ...results])
       
 
 
@@ -75,14 +73,14 @@ export default function Home( {postsPagination}: HomeProps ) {
     </Head>
       <div className={styles.posts}>
         <img src="/Logo.svg" alt="logo " />
-      { posts.map( post => (
-        <Link href="#" key={post.uid}>
+      { loadedPosts.map( post => (
+        <Link href={`/post/${post.uid}`} key={post.uid}>
           <a>
             <strong>{ post.data.title}</strong>
             <p>{post.data.subtitle}</p>
             <div>
               <FiCalendar className={styles.infoIcon}/>
-              <time>{post.first_publication_date}</time>
+              <time>{ format(new Date(post.first_publication_date), 'dd MMM yyyy', {locale: ptBR}).toLowerCase()}</time>
               <FiUser className={styles.infoIcon}/>
               <span>{post.data.author}</span>
             </div>
@@ -92,14 +90,14 @@ export default function Home( {postsPagination}: HomeProps ) {
       { nextPage
         && <button 
               type="button"
-              onClick={handleLoadMorePosts} > Carregar mais Posts</button>
+              onClick={handleLoadMorePosts} >Carregar mais posts</button>
       }
     </div>
     </>
   );
 }
 
-export const getStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
 
   const prismic = getPrismicClient();
 
@@ -112,17 +110,13 @@ export const getStaticProps = async () => {
       'posts.author', 'posts.banner', 
       'posts.content'
     ],
-    pageSize: 2,
+    pageSize: 1,
   });
 
   const posts = postsResponse.results.map( post => {
     return{
       uid: post.uid,
-      first_publication_date: new Date(post.first_publication_date).toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      }),
+      first_publication_date: post.first_publication_date,
       data: {
         title: post.data.title,
         subtitle: post.data.subtitle,
@@ -131,14 +125,13 @@ export const getStaticProps = async () => {
     }
   })
 
-  const postsPagination = {
-    next_page: postsResponse.next_page,
-    results: posts,
-  }
 
   return {
     props: {
-      postsPagination
+      postsPagination: {
+        next_page: postsResponse.next_page,
+        results: posts,
+      }
     },
     revalidate: 60*60*8, //8 horas
   }
